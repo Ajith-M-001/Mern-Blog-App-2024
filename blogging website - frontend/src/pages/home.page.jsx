@@ -40,7 +40,7 @@ const HomePage = () => {
         state: blogs,
         data: data,
         page,
-        countRoute: "all-latest-blogs-count",
+        countRoute: "blog/all-latest-blogs-count",
       });
 
       setBlogs((prevBlogs) => {
@@ -74,7 +74,7 @@ const HomePage = () => {
         state: blogs,
         data: data,
         page,
-        countRoute: "search-blogs-count",
+        countRoute: "blog/search-blogs-count",
         data_to_send: { tag: pageState },
       });
 

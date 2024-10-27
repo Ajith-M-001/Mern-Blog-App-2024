@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import Blog from "../Schema/Blog.js";
 import User from "../Schema/User.js";
 import Notification from "../Schema/Notification.js";
+import Comment from '../Schema/Comment.js'
 
 // export const createBlog = async (req, res) => {
 //   try {
@@ -498,30 +499,28 @@ export const updateUser = async (req, res) => {
   const { fullname, bio, social_links } = req.body;
   const { id: _id } = req.user;
 
-  if (!social_links || typeof social_links !== "object") {
-    return res.status(400).json({ message: "Invalid social links provided." });
-  }
+  if (social_links) {
+    let socialLinksArr = Object.keys(social_links);
+    try {
+      for (let i = 0; i < socialLinksArr.length; i++) {
+        if (social_links[socialLinksArr[i]].length) {
+          let hostname = new URL(social_links[socialLinksArr[i]]).hostname;
 
-  let socialLinksArr = Object.keys(social_links);
-  try {
-    for (let i = 0; i < socialLinksArr.length; i++) {
-      if (social_links[socialLinksArr[i]].length) {
-        let hostname = new URL(social_links[socialLinksArr[i]]).hostname;
-
-        if (
-          !hostname.includes(`${socialLinksArr[i]}.com`) &&
-          socialLinksArr[i] !== "website"
-        ) {
-          return res.status(403).json({
-            message: `${socialLinksArr[i]} link is invalid. You must enter a full link with http(s)://`,
-          });
+          if (
+            !hostname.includes(`${socialLinksArr[i]}.com`) &&
+            socialLinksArr[i] !== "website"
+          ) {
+            return res.status(403).json({
+              message: `${socialLinksArr[i]} link is invalid. You must enter a full link with http(s)://`,
+            });
+          }
         }
       }
+    } catch (error) {
+      return res.status(500).json({
+        message: "You must provide full social links with http(s) included.",
+      });
     }
-  } catch (error) {
-    return res.status(500).json({
-      message: "You must provide full social links with http(s) included.",
-    });
   }
 
   let updateObj = {
@@ -545,4 +544,96 @@ export const updateUser = async (req, res) => {
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
+};
+
+export const userWrittenBlogs = async (req, res) => {
+  const { id: user_id } = req.user;
+  let { page, draft, query, deletedDocCount } = req.body;
+
+  const maxLimit = 2;
+  let skipDocs = (page - 1) * maxLimit;
+
+  // Adjust skipDocs if deletedDocCount is provided
+  if (deletedDocCount) {
+    skipDocs -= deletedDocCount;
+  }
+
+  try {
+    const blogs = await Blog.find({
+      author: user_id,
+      draft,
+      title: new RegExp(query, "i"), // Case-insensitive search for the title
+    })
+      .skip(skipDocs)
+      .limit(maxLimit)
+      .sort({ publishedAt: -1 }) // Sort by the published date in descending order
+      .select("title banner publishedAt blog_id activity des draft -_id"); // Corrected 'tile' to 'title'
+
+    return res.status(200).json({ blogs });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+export const CountuserWrittenBlogs = async (req, res) => {
+  try {
+    const { id: user_id } = req.user;
+    const { draft, query } = req.body;
+
+    // Perform the count operation
+    const count = await Blog.countDocuments({
+      author: user_id,
+      draft,
+      title: new RegExp(query, "i"), // Case-insensitive search for the title
+    });
+
+    // Return the count of documents
+    return res.status(200).json({ totalDocs: count });
+  } catch (err) {
+    // Handle error
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+export const deleteBlog = async (req, res) => {
+  let user_id = req.user.id; // Assuming req.user contains the user object and user._id is the ID
+  let blog_id = req.body.blog_id; // Assuming req.body contains the blog_id
+
+  console.log(user_id);
+  console.log(blog_id);
+
+  Blog.findOneAndDelete({ blog_id }) // Finding and deleting the blog by its _id
+    .then((blog) => {
+ 
+
+      // Delete associated notifications
+      Notification.deleteMany({ blog: blog._id }).then(() =>
+        console.log("Notifications deleted")
+      );
+
+      // Delete associated comments
+      Comment.deleteMany({ blog: blog._id }).then(() =>
+        console.log("Comments deleted")
+      );
+
+      // Update the user's total posts count and remove the blog reference from the user
+      return User.findOneAndUpdate(
+        { _id: user_id },
+        {
+          $pull: { blogs: blog_id }, // Assuming user has a `blogs` array field
+          $inc: { "account_info.total_posts": -1 },
+        }
+      );
+    })
+    .then((user) => {
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      console.log("Blog deleted");
+      return res.status(200).json({ status: "done" });
+    })
+    .catch((err) => {
+      console.error(err);
+      return res.status(500).json({ error: err.message });
+    });
 };

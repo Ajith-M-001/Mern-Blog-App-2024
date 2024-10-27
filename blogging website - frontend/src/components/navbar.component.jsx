@@ -1,21 +1,43 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import logo from "../imgs/logo.png";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { UserContext } from "../App";
 import UserNavigationPanel from "./user-navigation.component";
+import axios from "axios";
 
 const NavbarComponent = () => {
-  const { userAuth } = useContext(UserContext);
+  const { userAuth, setUserAuth } = useContext(UserContext);
   const [showUserPanel, setShowUserPanel] = useState(false);
   // console.log(userAuth, userAuth?.access_token);
+  const baseURL = import.meta.env.VITE_SERVER_DOMAIN;
   const navigate = useNavigate();
   const [serarchBoxVisibility, setSearchBoxVisiblity] = useState(false);
   const profile_img = userAuth?.user?.profile_img;
+  const access_token = userAuth?.access_token;
+  const new_notification_available = userAuth?.new_notification_available;
+  console.log(new_notification_available);
   const handleBlur = () => {
     setTimeout(() => {
       setShowUserPanel(false);
     }, 200);
   };
+
+  useEffect(() => {
+    if (access_token) {
+      axios
+        .get(`${baseURL}/notification/new`, {
+          headers: {
+            Authorization: `Brarer ${access_token}`,
+          },
+        })
+        .then(({ data }) => {
+          setUserAuth({ ...userAuth, ...data });
+        })
+        .catch((err) => {
+          console.log(err.message);
+        });
+    }
+  }, [access_token]);
 
   const handlesearch = (e) => {
     let query = e.target.value;
@@ -59,9 +81,12 @@ const NavbarComponent = () => {
           </Link>
           {userAuth?.access_token ? (
             <>
-              <Link to={"/dashboard/notification"}>
+              <Link to={"/dashboard/notifications"}>
                 <button className="w-12 h-12 rounded-full bg-grey relative hover:bg-black/10">
                   <i className="fi fi-rr-bell text-2xl block mt-1"></i>
+                  {new_notification_available && (
+                    <span className="bg-red absolute w-3 h-3 rounded-full top-2 right-2 z-10"></span>
+                  )}
                 </button>
               </Link>
               <div

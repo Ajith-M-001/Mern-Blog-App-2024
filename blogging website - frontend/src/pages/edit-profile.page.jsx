@@ -272,6 +272,63 @@ const EditProfile = () => {
     }
   };
 
+const handleSubmit = (e) => {
+  e.preventDefault();
+
+  const form = new FormData(editProfileRef.current);
+  let formData = {};
+
+  // Populate formData with the entries from the form
+  for (let [key, value] of form.entries()) {
+    formData[key] = value;
+  }
+
+  // Check if the access token exists
+  if (!access_token) {
+    toast.error("You are not authenticated.");
+    return;
+  }
+
+  // API call to update profile data
+  axios
+    .post(`${baseURL}/blog/update-profile`, formData, {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    })
+    .then(({ data }) => {
+      // Update local profile state
+      setProfile(data.updatedProfile);
+
+      // Update the global userAuth state with the updated profile
+      let newUserAuth = {
+        user: {
+          ...userAuth.user, // Keep existing user details
+          fullname: data.updatedProfile.personal_info.fullname,
+          bio: data.updatedProfile.personal_info.bio,
+          social_links: data.updatedProfile.social_links,
+          profile_img: updatedProfileImgf || userAuth.user.profile_img, // Keep the uploaded image or existing one
+        },
+        access_token: userAuth.access_token, // Keep the same access token
+        message: "Profile updated successfully!",
+      };
+
+      // Store updated user data in the session
+      storeInSession("user", JSON.stringify(newUserAuth));
+
+      // Update the state
+      setUserAuth(newUserAuth);
+
+      toast.success("Profile updated successfully!");
+    })
+    .catch((err) => {
+      console.error("Error updating profile:", err);
+      toast.error("Failed to update profile. Please try again.");
+    });
+};
+
+
   useEffect(() => {
     return () => {
       if (profileImgEle.current?.src) {

@@ -4,7 +4,7 @@ import Notification from "../Schema/Notification.js";
 
 export const addComment = async (req, res) => {
   const user_id = req.user.id;
-  const { _id, comment, blog_author, replying_to } = req.body;
+  const { _id, comment, blog_author, replying_to, notification_id } = req.body;
 
   if (!comment.length) {
     return res
@@ -60,6 +60,15 @@ export const addComment = async (req, res) => {
     new Notification(notificationObj).save().then((notification) => {
       console.log("new notification created");
     });
+
+    if (notification_id) {
+      Notification.findOneAndUpdate(
+        { _id: notification_id },
+        { reply: commentFile._id }
+      ).then((notification) => {
+        console.log("notification updated");
+      });
+    }
 
     return res
       .status(200)
@@ -139,9 +148,10 @@ const deleteComments = (_id) => {
         console.log("comment notification deleted")
       );
 
-      Notification.findOneAndDelete({ reply: _id }).then((notification) =>
-        console.log("reply notification deleted")
-      );
+      Notification.findOneAndUpdate(
+        { reply: _id },
+        { $unset: { reply: 1 } }
+      ).then((notification) => console.log("reply notification deleted"));
 
       Blog.findOneAndDelete(
         { _id: comment.blog_id },

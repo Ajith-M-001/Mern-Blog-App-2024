@@ -80,7 +80,7 @@ const UserProfilePage = () => {
         state: blogs,
         data: data,
         page,
-        countRoute: "/search-blogs-count",
+        countRoute: "blog/search-blogs-count",
         data_to_send: { author: user_id },
       });
       formatedData.user_id = user_id;

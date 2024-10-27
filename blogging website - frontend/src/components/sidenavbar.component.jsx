@@ -85,6 +85,7 @@ const SideNav = () => {
   const path = location.pathname.split("/")[2];
   const { userAuth } = useContext(UserContext);
   const access_token = userAuth?.access_token;
+  const new_notification_available = userAuth?.new_notification_available;
   const [page, setPage] = useState(path ? path.replace("-", " ") : "Dashboard");
   const activeTabLine = useRef();
   const sideBarIconTab = useRef();
@@ -159,10 +160,15 @@ const SideNav = () => {
             className={({ isActive }) =>
               `sidebar-link ${isActive ? "active" : ""}`
             }
-            to="/dashboard/notification"
+            to="/dashboard/notifications"
             onClick={() => handlePageClick("Notification")}
           >
-            <i className="fi fi-rs-bell"></i>
+            <div className="relative">
+              <i className="fi fi-rs-bell"></i>
+              {new_notification_available && (
+                <span className="bg-red h-2 w-2 rounded-full absolute z-10 top-0 right-0"></span>
+              )}
+            </div>
             Notification
           </NavLink>
           <NavLink

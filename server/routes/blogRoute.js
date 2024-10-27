@@ -13,6 +13,9 @@ import {
   getLikeDetailsOfPost,
   updateUserProfie,
   updateUser,
+  userWrittenBlogs,
+  CountuserWrittenBlogs,
+  deleteBlog,
 } from "../controllers/blogController.js";
 import verifyJWT from "../Middleware/verifyJWT.js";
 
@@ -45,5 +48,9 @@ router.post("/like-blog", verifyJWT, likePosts);
 router.post("/isLiked-by-blog", verifyJWT, getLikeDetailsOfPost);
 
 router.post("/get-blog", getBlog);
+
+router.post("/user-written-blogs", verifyJWT, userWrittenBlogs);
+router.post("/user-written-blogs-count", verifyJWT, CountuserWrittenBlogs);
+router.post("/delete-blog", verifyJWT, deleteBlog);
 
 export default router;

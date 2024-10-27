@@ -5,6 +5,7 @@ dotenv.config();
 import authRouter from "./routes/authRoute.js";
 import blogRouter from "./routes/blogRoute.js";
 import commentRouter from "./routes/commentRoute.js";
+import notificationRouter from "./routes/notificationRoute.js";
 import cors from "cors";
 
 const server = express();
@@ -17,6 +18,7 @@ server.use(express.urlencoded({ extended: true }));
 server.use("/api/v1/auth", authRouter);
 server.use("/api/v1/blog", blogRouter);
 server.use("/api/v1/comment", commentRouter);
+server.use("/api/v1/notification", notificationRouter);
 server.get("/", (req, res) => {
   res.send("server running");
 });
