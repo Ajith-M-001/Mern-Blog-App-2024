@@ -5,7 +5,6 @@ import BlogEditorComponent from "../components/blog-editor.component";
 import PublishFormComponent from "../components/publish-form.component";
 import Loader from "../components/loader.component";
 import axios from "axios";
-import { model } from "mongoose";
 
 const blogStructure = {
   title: "",
