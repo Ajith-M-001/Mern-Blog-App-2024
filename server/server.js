@@ -37,6 +37,7 @@ const frontendPath = path.join(
 );
 server.use(express.static(frontendPath));
 
+
 // Catch-all route for SPA (React) to handle client-side routing
 server.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
