@@ -27,7 +27,6 @@ server.get("/", (req, res) => {
   res.send("server running");
 });
 
-// Serve frontend static files
 const __dirname = path.resolve();
 const frontendPath = path.join(
   __dirname,
@@ -38,10 +37,10 @@ const frontendPath = path.join(
 server.use(express.static(frontendPath));
 
 
-// Catch-all route for SPA (React) to handle client-side routing
-server.get("*", (req, res) => {
+server.get("/*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
+
 
 // Start server and connect to DB
 const startServer = async () => {
